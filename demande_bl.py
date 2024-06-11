@@ -58,7 +58,7 @@ for fournisseur, group in grouped:
     body = f"""
     Bonjour,
 
-    Veuillez nous transmettre les factures correspondants Bons de Livraison suivants (et ci-joint) :
+    Veuillez nous transmettre les bon de livraisons émargé correspondants aux factures suivantes (et ci-joint) :
 
     """
     
@@ -76,7 +76,7 @@ for fournisseur, group in grouped:
                 # Assume the email address can be derived from the fournisseur name (you need to adjust this part)
             to_address = f"mohamed.zbairi@salamarket31.fr"
             # Create the email subject and body
-            subject = f"Demande de facture"
+            subject = f"Demande de bon de livraison"
             body += f"""- BL {reference_document} de la livraison du {date_document}.\n"""
 
     body += """Cordialement,

@@ -35,7 +35,7 @@ def send_email(to_address, subject, body):
 
 
 # Load the Excel file
-file_path_pattern  = './BL/*ZeenDoc_Indexes.xlsx'
+file_path_pattern  = 'r\\192.168.1.156\gestion\BL_ZEENDOC\*ZeenDoc_Indexes.xlsx'
 files = glob.glob(file_path_pattern )
 for file_path in files:
     try:
