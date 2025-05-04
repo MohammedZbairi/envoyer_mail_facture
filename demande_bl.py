@@ -6,11 +6,11 @@ import time
 import glob
 
 # Email configuration
-smtp_server = 'smtp.gmail.com'
-smtp_port = 465
-smtp_user = 'zmo.salamarket@gmail.com'
-smtp_password = 'rpmdafixalzbkfxx'
-to_address = f"mohamed.zbairi@salamarket31.fr"
+smtp_server = 'imap.planet-work.com'
+smtp_port = 993
+smtp_user = 'mohamed.zbairi@salamarket31.fr'
+smtp_password = 'Mohamed!31*'
+to_address = f"zmo.salamarket@gmail.com"
 
 # Define a function to send emails
 def send_email(to_address, subject, body):

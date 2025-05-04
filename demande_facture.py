@@ -1,103 +1,88 @@
-import pandas as pd
+import pandas as pd 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 import time
 import glob
 
-# Email configuration
-smtp_server = 'smtp.gmail.com'
-smtp_port = 465
-smtp_user = 'zmo.salamarket@gmail.com'
-smtp_password = 'rpmdafixalzbkfxx'
-to_address = f"mohamed.zbairi@salamarket31.fr"
+# Configuration de l'e-mail
+smtp_server = 'smtp.planet-work.com'
+smtp_port = 587  # Port STARTTLS
+smtp_user = 'mohamed.zbairi@salamarket31.fr'
+smtp_password = 'Mohamed!31*'
 
-# Define a function to send emails
+# Fonction pour envoyer un e-mail
 def send_email(to_address, subject, body):
+    if not to_address or to_address.lower() == "non":
+        print(f"Adresse e-mail invalide pour {to_address}, e-mail ignoré.")
+        return
+    
     msg = MIMEMultipart()
     msg['From'] = smtp_user
     msg['To'] = to_address
     msg['Subject'] = subject
-
     try:
         msg.attach(MIMEText(body, 'plain'))
-
-
-        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:  # Using SMTP_SSL for SSL/TLS
-            server.set_debuglevel(1)  # Enable debug output
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.ehlo()
+            server.starttls()
             server.login(smtp_user, smtp_password)
             server.sendmail(smtp_user, to_address, msg.as_string())
-        print(f"Test email sent to {to_address}")
-    except smtplib.SMTPServerDisconnected as e:
-        print(f"Failed to send test email: Connection unexpectedly closed - ")
-    except Exception as e:
-        print(f"Failed to send test email: ")
-
-
-# Load the Excel file
-file_path_pattern  = 'r\\192.168.1.156\gestion\BL_ZEENDOC\*ZeenDoc_Indexes.xlsx'
-files = glob.glob(file_path_pattern )
-for file_path in files:
-    try:
-        df = pd.read_excel(file_path, header=3)  # Reading the file starting at the 4th row
-        print("Excel file loaded successfully.")
-        print(df.head())
-    except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
-        exit(1)
-    except Exception as e:
-        print(f"An error occurred while reading the Excel file: {e}")
-        exit(1)
-
-# Group documents by fournisseur
-grouped = df.groupby('Fournisseur')
-
-# Loop through each group (each fournisseur)
-for fournisseur, group in grouped:
-    # Initialize email body
-    body = f"""
-    Bonjour,
-
-    Veuillez nous transmettre les factures correspondants Bons de Livraison suivants (et ci-joint) :
-
-    """
-    
-    # Add details for each document in the group
-    # Loop through each row in the dataframe
-    for index, row in group.iterrows():
-        if pd.notna(row['Identifiant']):
-        # Extract the necessary information
-            identifiant = row['Identifiant']
-            type_document = row['Type de document']
-            fournisseur = row['Fournisseur']
-            reference_document = row['Référence du document']
-            date_document = row['Date du document']
-            montant_ttc = row['Montant TTC']
-                # Assume the email address can be derived from the fournisseur name (you need to adjust this part)
-            to_address = f"mohamed.zbairi@salamarket31.fr"
-            # Create the email subject and body
-            subject = f"Demande de facture"
-            body += f"""- BL {reference_document} de la livraison du {date_document}.\n"""
-
-    body += """Cordialement,
-    SalaMarket Toulouse
-
-    Groupe K&A Food
-
-
-    8 avenue Larrieu-Thibaud
-
-    31100 TOULOUSE
-
-
-    (+33) (0)5 34 56 44 25 
-    """
-    # Send the email
-    try:
-        send_email(to_address, subject, body)
         print(f"Email envoyé à {to_address}")
     except Exception as e:
         print(f"Échec de l'envoi de l'email à {to_address} : {e}")
-    
-    time.sleep(30)
 
+# Charger le fichier des fournisseurs
+try:
+    fournisseurs_df = pd.read_excel('C:/Users/ZBAIRI/Desktop/DEV/envoyer_mail_facture/BL/fournisseurs.xlsx')
+    print("Fichier fournisseurs chargé avec succès.")
+except Exception as e:
+    print(f"Erreur lors de la lecture du fichier des fournisseurs : {e}")
+    exit(1)
+
+if 'FOURNISSEUR' not in fournisseurs_df.columns or 'E-mail' not in fournisseurs_df.columns:
+    print("Les colonnes 'FOURNISSEUR' ou 'E-mail' sont absentes du fichier des fournisseurs.")
+    exit(1)
+
+email_mapping = dict(zip(fournisseurs_df['FOURNISSEUR'], fournisseurs_df['E-mail']))
+
+file_path_pattern = r'C:/Users/ZBAIRI/Desktop/DEV/envoyer_mail_facture/BL/*ZeenDoc_Indexes.xlsx'
+files = glob.glob(file_path_pattern)
+if not files:
+    print("Aucun fichier de factures trouvé.")
+    exit(1)
+
+for file_path in files:
+    try:
+        df = pd.read_excel(file_path, header=0)
+        print(df.head(10))
+        print(f"Fichier chargé : {file_path}")
+    except Exception as e:
+        print(f"Erreur lors de la lecture du fichier {file_path} : {e}")
+        continue
+
+    if 'Fournisseur' not in df.columns:
+        print(f"Colonne 'Fournisseur' absente dans le fichier {file_path}")
+        continue
+
+    grouped = df.groupby('Fournisseur')
+    for fournisseur, group in grouped:
+        email = email_mapping.get(fournisseur, None)
+        if not email:
+            print(f"Aucune adresse e-mail trouvée pour le fournisseur : {fournisseur}")
+            continue
+        
+        subject = f"Demande de facture : {fournisseur}"
+        body = f"Bonjour,\n\nVeuillez nous transmettre les factures correspondants Bons de Livraison suivants sur l'adresse mail facture@salamarket31.fr :\n\n"
+        for _, row in group.iterrows():
+            date_document = pd.to_datetime(row['Date du document'])
+            formatted_date = date_document.strftime("%d-%m-%Y")
+            if pd.notna(row.get('Référence du document')) and formatted_date:
+                body += f"- BL {row['Référence du document']} de la livraison du {formatted_date}.\n"
+        body += "\nSalaMarket Toulouse\n\nGroupe K&A Food\n\n8 avenue Larrieu-Thibaud\n\n31100 TOULOUSE\n\n(+33) (0)5 34 56 44 25"
+
+        try:
+            send_email(to_address=email, subject=subject, body=body)
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email à {email} : {e}")
+        time.sleep(30)
