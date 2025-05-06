@@ -73,13 +73,13 @@ for file_path in files:
             continue
         
         subject = f"Demande de facture : {fournisseur}"
-        body = f"Bonjour,\n\nVeuillez nous transmettre les factures correspondants Bons de Livraison suivants sur l'adresse mail facture@salamarket31.fr :\n\n"
+        body = f"Bonjour,\n\nVeuillez nous transmettre les factures correspondantes aux Bons de Livraison suivants sur l'adresse mail facture@salamarket31.fr :\n\n"
         for _, row in group.iterrows():
             date_document = pd.to_datetime(row['Date du document'])
             formatted_date = date_document.strftime("%d-%m-%Y")
             if pd.notna(row.get('Référence du document')) and formatted_date:
                 body += f"- BL {row['Référence du document']} de la livraison du {formatted_date}.\n"
-        body += "\nSalaMarket Toulouse\n\nGroupe K&A Food\n\n8 avenue Larrieu-Thibaud\n\n31100 TOULOUSE\n\n(+33) (0)5 34 56 44 25"
+        body += "\n------\nSalaMarket Toulouse\n\nGroupe K&A Food\n\n8 avenue Larrieu-Thibaud\n\n31100 TOULOUSE\n\n(+33) (0)5 34 56 44 25"
 
         try:
             send_email(to_address=email, subject=subject, body=body)
